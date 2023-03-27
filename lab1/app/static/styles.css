@@ -1,0 +1,20 @@
+body {
+    font-size: 1.25rem;
+    min-height: 100vh;
+}
+
+.avatar {
+    max-width: 100%;
+}
+
+.links{
+    gap: 1rem;
+}
+
+.text-justify{
+    text-align: justify;
+}
+
+.card > textarea{
+    max-width: 95%;
+}
