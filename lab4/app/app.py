@@ -224,7 +224,7 @@ def change_password(user_id):
             # print(cursor.statement)
             user = cursor.fetchone()
 
-        if repeat_password and not check_password(repeat_password):
+        if new_password and not check_password(new_password):
             wrong_params.append('incorrect_new_password')
         if new_password != repeat_password:
             wrong_params.append('repeat_password')
