@@ -13,13 +13,7 @@
                 №
             </th>
             <th>
-                last_name
-            </th>
-            <th>
-                first_name
-            </th>
-            <th>
-                middle_name
+                ФИО
             </th>
             <th>
                 login
@@ -38,17 +32,13 @@
             <td>
                 {{loop.index}}
             </td>
-            <td>
-                {{user.last_name}}
-            </td>
-            <td>
-                {{user.first_name}}
-            </td>
-            <td>
+            <td id="fullName">
+                {{user.last_name}} {{user.first_name}} 
                 {% if user.middle_name %}
                 {{user.middle_name}}
                 {% endif %}
             </td>
+
             <td>
                 {{user.login}}
             </td>
@@ -58,10 +48,8 @@
             <td>
                 <div class="btn-group" role="group">
                     <a class="btn btn-secondary" href="{{ url_for('show_user', user_id=user.id) }}">Просмотр</a>
-                    {% if current_user.is_authenticated %}
                     <a class="btn btn-primary" href="{{ url_for('edit_user', user_id=user.id) }}">Редактировать</a>
                     <button class="btn btn-danger" data-bs-toggle="modal" data-url="{{ url_for('delete_user', user_id=user.id) }}" data-bs-target="#deleteUser">Удалить</button>
-                    {% endif %}
 
                     <!-- Modal -->
                     <div class="modal fade" id="deleteUser" data-bs-backdrop="static" data-bs-keyboard="false"
@@ -94,7 +82,5 @@
         {% endfor %}
     </tbody>
 </table>
-{% if current_user.is_authenticated %}
 <a href="{{url_for('users_new')}}" class="btn btn-primary">Добавить пользователя</a>
-{% endif %}
 {% endblock %}
