@@ -1,15 +1,20 @@
 
-{% macro user_form(user, action, roles_list, wrong_params) %}
+{% macro user_form(user, action, roles_list, wrong_params = []) %}
 <form method="POST" action="{{ action }}">
     {% if request.endpoint == 'users_new' or request.endpoint == 'create_user' %}
     <div class="row mb-3">
         <label for="login" class="col-sm-2 col-form-label">Login</label>
         <div class="col-sm-10">
-            <input type="text" name="login" class="form-control {% if 'login' in wrong_params %} is-invalid {% endif %}"
+            <input type="text" name="login" class="form-control {% if 'login' in wrong_params or 'incorrect_login' in wrong_params%} is-invalid {% endif %}"
                 id="login" value="{{ user.login or '' }}">
             {% if 'login' in wrong_params %}
             <div class="invalid-feedback">
                 Поле Login не может быть пустым.
+            </div>
+            {% endif %}
+            {% if 'incorrect_login' in wrong_params %}
+            <div class="invalid-feedback">
+                Некорректный логин.
             </div>
             {% endif %}
         </div>

@@ -111,9 +111,13 @@ def create_user():
     for key, value in params.items():
         if not value and key != 'middle_name':
             wrong_params.append(key)
-            
+
+    if params['login'] and (len(params['login']) < 5 or not params['login'].isalnum()):
+        wrong_params.append('incorrect_login')
+
     if params['password'] and not check_password(params['password']):
         wrong_params.append('incorrect_password')
+
         
     # print(wrong_params)
     if wrong_params:
@@ -139,6 +143,15 @@ def create_user():
 def update_user(user_id):
     params = extract_params(EDIT_PARAMS)
     params['id'] = user_id
+    wrong_params = []
+    # print(params)
+    for key, value in params.items():
+        if not value and key != 'middle_name':
+            wrong_params.append(key)
+    if wrong_params:
+        flash('Заполните корректно форму', 'danger')
+        return render_template('users_edit.html', user = params, roles_list = load_roles(), wrong_params = wrong_params)
+
     query = ('UPDATE users SET last_name=%(last_name)s, first_name=%(first_name)s, '
              'middle_name=%(middle_name)s, role_id=%(role_id)s WHERE id=%(id)s;')
     try:
@@ -149,7 +162,7 @@ def update_user(user_id):
     except mysql.connector.errors.DatabaseError:
         db.connection().rollback()
         flash('При сохранении данных возникла ошибка.', 'danger')
-        return render_template('users_edit.html', user = params, roles_list = load_roles())
+        return render_template('users_edit.html', user = params, roles_list = load_roles(), wrong_params = wrong_params)
 
     return redirect(url_for('users'))
 
