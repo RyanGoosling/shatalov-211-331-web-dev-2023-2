@@ -1,5 +1,5 @@
 
-{% macro user_form(user, action, roles_list, wrong_params = []) %}
+{% macro user_form(user, action, roles_list, wrong_params = [], wrong_password = '', wrong_login = '') %}
 <form method="POST" action="{{ action }}">
     {% if request.endpoint == 'users_new' or request.endpoint == 'create_user' %}
     <div class="row mb-3">
@@ -14,7 +14,7 @@
             {% endif %}
             {% if 'incorrect_login' in wrong_params %}
             <div class="invalid-feedback">
-                Некорректный логин.
+                {{wrong_login}}
             </div>
             {% endif %}
         </div>
@@ -31,7 +31,7 @@
             </div>
             {% elif 'incorrect_password' in wrong_params %}
             <div class="invalid-feedback">
-                Некорректный пароль.
+                {{wrong_password}}
             </div>
             {% endif %}
         </div>
@@ -84,9 +84,7 @@
     <button type="submit" class="btn btn-primary">Сохранить</button>
 </form>
 <div>
-    {#{{wrong_params}}
-    {% for param in wrong_params %}
-    {{param}}
-    {% endfor %}#}
+    {{wrong_login}}
+    {{wrong_password}}
 </div>
 {% endmacro %}
