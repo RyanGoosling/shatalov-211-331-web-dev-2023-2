@@ -23,7 +23,7 @@ def ping_ip_addresses(addresses):
     reachable_addresses = []
     unreachable_addresses = []
     for ip in addresses:
-        replay = subprocess.run(['ping', ip], encoding='utf-8')
+        replay = subprocess.run(["ping", "-c", "3", ip], encoding='utf-8')
         if replay.returncode == 0:
             reachable_addresses.append(ip)
         else: unreachable_addresses.append(ip)
