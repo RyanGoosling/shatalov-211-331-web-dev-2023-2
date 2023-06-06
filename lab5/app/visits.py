@@ -1,13 +1,15 @@
 
 import io
 from flask import render_template, Blueprint, request, send_file
-from flask_login import current_user
-from app import db
+from flask_login import current_user, login_required
+from app import db, app
 from math import ceil
-from auth import permission_check
+from auth import permission_check, init_login_manager
 PER_PAGE = 10
 
 bp = Blueprint('visits', __name__, url_prefix='/visits')
+
+init_login_manager(app)
 
 def generate_report_file(records, fields):
     csv_content = '№,' + ','.join(fields) + '\n'
@@ -20,9 +22,10 @@ def generate_report_file(records, fields):
     return f
 
 @bp.route('/')
+@login_required
 def logging():
     page = request.args.get('page', 1, type = int)
-    if current_user.can('show_log'):
+    if current_user.is_authenticated and current_user.can('show_log'):
         query = ('SELECT visit_logs.*, users.login '
                 'FROM users RIGHT JOIN visit_logs ON visit_logs.user_id = users.id '
                 'ORDER BY created_at DESC LIMIT %s OFFSET %s')
@@ -52,6 +55,7 @@ def logging():
     return render_template('visits/logs.html', logs = logs, last_page = last_page, current_page = page)
 
 @bp.route('/stat/pages')
+@login_required
 @permission_check('show_log')
 def pages_stat():
     query = 'SELECT path, COUNT(*) as count FROM visit_logs GROUP BY path ORDER BY count DESC;'
@@ -64,6 +68,7 @@ def pages_stat():
     return render_template('visits/pages_stat.html', records=records)
 
 @bp.route('/stat/users')
+@login_required
 @permission_check('show_log')
 def users_stat():
     query = ('SELECT users.first_name, users.last_name, users.middle_name, COUNT(visit_logs.id) AS count '
