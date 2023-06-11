@@ -81,6 +81,10 @@ def show(course_id):
 @login_required
 def new_review(course_id): #user petrov kykyshkin alex rogov flower yulay
     user_id = current_user.id
+    check_review = Review.query.filter_by(course_id=course_id).filter_by(user_id=user_id).all()
+    if check_review:
+        flash(f'Вы уже оставляли отзыв на этот курс.', 'warning')
+        return redirect(url_for('courses.show', course_id=course_id))
     text = request.form['text']
     rating = request.form['rating']
     review = Review(text=text, rating=rating, 
