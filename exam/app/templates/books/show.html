@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-3">
+    <div class="row">
+        <div class="col-md-3 text-center">
+            <img src="{{ url_for('image', image_id=book.background_image_id) }}" alt="Cover of book" height="400">
+        </div>
+        <div class="col-md-9">
+            <div class="row">
+                <div class="col-md-3">
+                    <h5>{{book.name}}</h5>
+                    <p class="my-1">Автор: {{book.author}}</p>
+                    <p class="my-1">Издательство: {{book.publisher}}, {{book.year}} г.</p>
+                    <p class="my-1">Страниц: {{book.pages}}</p>
+                    <p class="my-1">Жанры: 
+                        {% for genre in book.genres %}
+                            {{genre.name}}
+                        {% endfor %}
+                    </p>
+                </div>
+                <div class="col-md-9">
+                    <span>Рейтинг: ★</span> <span>{{ "%.2f" | format(book.rating) }}</span>
+                    <p class="my-1">{{book.short_desc}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="container mt-5">
+    <section class="reviews mb-5">
+        {% if current_user.is_authenticated %}
+        <div class="card">
+            <div class="card-header">
+                {% if review %}Ваша рецензия от {{review.created_at}}
+                {%else%}Оставьте рецензию{%endif%}
+            </div>
+            {% if review %}
+            <p class="ms-3 mt-2">Ваша оценка: {{review.rating_word}}</p>
+            <p class="ms-3 mb-3">{{review.text}}</p>
+            {% else %}
+            <form action="{{ url_for('books.new_review', book_id=book.id) }}" method="post">
+                <select class="form-select ms-3 my-3" id="review-rating" name="rating" title="Оценка курсу">
+                    <option value="5" selected>Отлично</option>
+                    <option value="4">Хорошо</option>
+                    <option value="3">Удовлетворительно</option>
+                    <option value="2">Неудовлетворительно</option>
+                    <option value="1">Плохо</option>
+                    <option value="0">Ужасно</option>
+                </select>
+                <textarea class="form-control my-3 px-2 ms-3" id="review-text" name="text" rows="3"></textarea>
+                <button type="submit" class="btn btn-primary mb-3 ms-3 me-auto">Отправить</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="d-flex flex-column mt-3 ms-4">
+            {% for comment in book_reviews %}
+            {% if comment.user_id != current_user.id %}
+                <div class="card my-2">
+                    <div class="card-header">
+                        <h5>{{comment.user.full_name}}</h5>
+                        <span>{{comment.created_at}}</span>
+                    </div>
+                    <p class="ms-3 mt-2">Оценка: {{comment.rating_word}}</p>
+                    <p class="ms-3 mb-3">{{comment.text}}</p>
+                </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+{% endblock %}

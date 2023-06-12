@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% from 'books/form.html' import book_form %}
+
+{% block content %}
+    <div class="container">
+        <h2 class="my-3 text-center text-uppercase font-weight-bold">Редактирование книги {{book.name}}</h2>
+
+        {{ book_form(book, genres, 'books.update', params) }}
+    </div>
+{% endblock %}
