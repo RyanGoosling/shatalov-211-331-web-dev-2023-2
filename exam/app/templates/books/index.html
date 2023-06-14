@@ -7,34 +7,63 @@
     <div class="courses-list container-fluid">
         <div class="row mb-3 mt-3 gap-2 justify-content-around">
             {% for book in books %}
-                <div class="col-md-4 d-flex justify-content-center" data-url="{{ url_for('books.show', book_id=book.id) }}">
-                    <div class="card my-2">
-                        <img class="card-img-top w-75 align-self-center mt-3" src="{{ url_for('image', image_id=book.background_image_id) }}" alt="Card image cap">
-                        <div class="card-body">
-                            <!-- <h4 class="card-title"></h4> -->
-                            <p class="card-title fw-bold">
-                               {{ book.name }} <span>★</span> <span>{{ "%.2f" | format(book.rating) }}</span>
-                            </p>
-                            <p class="card-text">
-                                Автор: {{ book.author }}
-                            </p>
-                            <!-- <a href="#" class="btn btn-primary">Читать дальше &rarr;</a> -->
+            <div class="col-md-4 d-flex justify-content-center" >
+                <div class="card my-2" data-url="{{ url_for('books.show', book_id=book.id) }}">
+                    <img class="card-img-top w-75 align-self-center mt-3"
+                        src="{{ url_for('image', image_id=book.background_image_id) }}" alt="Card image cap">
+                    <div class="card-body">
+                        <p class="card-title fw-bold">
+                            <span id="nameOfBook">{{ book.name }}</span> 
+                            <span>★</span> <span>{{ "%.2f" |
+                                format(book.rating) }}</span>
+                        </p>
+                        <p class="card-text">
+                            Автор: {{ book.author }}
+                        </p>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <p class="mb-2">
+                            Издательсво: {{book.publisher}}, {{book.year}} г.
+                        </p>
+                        {% if current_user.is_authenticated and current_user.can('update') %}
+                        <div class="fs-4 mt-2 d-flex justify-content-evenly manage-button">
+                            <a class="text-secondary text-decoration-none"
+                                href="{{ url_for('books.edit', book_id=book.id) }}">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            {% if current_user.is_authenticated and current_user.can('delete') %}
+                            <a class="text-danger text-decoration-none" href="#" data-bs-toggle="modal"
+                                data-url="{{ url_for('books.delete', book_id=book.id) }}" data-bs-target="#deleteBook">
+                                <i class="bi bi-trash3"></i>
+                            </a>
+                            {% endif %}
                         </div>
-                        <div class="card-footer text-muted">
-                            <p class="mb-2">
-                                Издательсво: {{book.publisher}}, {{book.year}} г.
-                            </p>
-                            <div class="fs-4 mt-2 d-flex justify-content-evenly">
-                                <a class="text-secondary text-decoration-none" href="{{ url_for('books.edit', book_id=book.id) }}">
-                                    <i class="bi bi-pencil-square"></i>
-                                </a>
-                                <a class="text-secondary text-decoration-none" href="">
-                                    <i class="bi bi-trash3"></i>
-                                </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal fade" id="deleteBook" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+                    aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="staticBackdropLabel">Удаление книги</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Вы уверены, что хотите удалить книгу "<span id="bookName"></span>"?</p>
+                                <form class="d-none" action="" method="POST">
+                                    <input type="submit" id="deleteBookButton">
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                <label for="deleteBookButton" class="btn btn-danger">Удалить</label>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
             {% endfor %}
         </div>
     </div>
@@ -43,11 +72,11 @@
         {{ render_pagination(pagination, request.endpoint, search_params) }}
     </div>
 
-    {# if current_user.is_authenticated #}
-        <div class="text-center my-3">
-            <a class="btn btn-lg btn-dark" href="{{ url_for('books.new') }}">Добавить книгу</a>
-        </div>
-    {# endif #}
+    {% if current_user.is_authenticated and current_user.can('create') %}
+    <div class="text-center my-3">
+        <a class="btn btn-lg btn-dark" href="{{ url_for('books.new') }}">Добавить книгу</a>
+    </div>
+    {% endif %}
 
 </div>
 {% endblock %}

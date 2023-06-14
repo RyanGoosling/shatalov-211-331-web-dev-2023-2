@@ -5,6 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from flask_login import UserMixin
 from flask import url_for
 from app import db
+from users_policy import UsersPolicy
 
 RATING_WORDS = {
     5: 'Отлично',
@@ -47,8 +48,8 @@ class Book(db.Model):
                            server_default=sa.sql.func.now())
 
     genres = db.relationship('Genre', secondary=book_genre, backref='books')#backref: genres.books = books.genres
-    bg_image = db.relationship('Image', cascade='all, delete')
-    # reviews = db.relationship('Review', cascade='all, delete', collection_class=set)
+    bg_image = db.relationship('Image', backref='books')
+    reviews = db.relationship('Review', cascade='all, delete', backref='book')
 
     def __repr__(self):
         return '<Book %r>' % self.name
@@ -98,15 +99,14 @@ class Review(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-    book = db.relationship('Book', backref='reviews')
-    user = db.relationship('User')
+    user = db.relationship('User', backref='reviews')
 
     @property
     def rating_word(self):
         return RATING_WORDS.get(self.rating)
 
     def __repr__(self):
-        return '<Review %r>' % self.id
+        return '<Review %r, %r>' % (self.id, self.text[:10])
     
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -141,6 +141,21 @@ class User(db.Model, UserMixin):
     @property
     def full_name(self):
         return ' '.join([self.last_name, self.first_name, self.middle_name or ''])
+    
+    @property
+    def is_admin(self):
+        return self.role.name == 'Администратор'
+
+    @property
+    def is_moder(self):
+        return (self.role.name == 'Администратор' or self.role.name == 'Модератор')
+    
+    def can(self, action, record = None):
+        users_policy = UsersPolicy(record)
+        method = getattr(users_policy, action, None)
+        if method:
+            return method()
+        return False
 
     def __repr__(self):
         return '<User %r>' % self.login

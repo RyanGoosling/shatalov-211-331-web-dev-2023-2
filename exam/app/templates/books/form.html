@@ -31,7 +31,7 @@
                 <input class="form-control" type="number" name="year" id="year" min="1901" max="2155" value="{{book.year or ''}}">
             </div>
         </div>
-        {% if 'create' in request.endpoint %}
+        {% if 'create' in request.endpoint or 'new' in request.endpoint%}
         <div class="col-md-6 d-flex flex-column">
             <div class="mb-3">
                 <label for="background_img">Фоновое изображение</label>

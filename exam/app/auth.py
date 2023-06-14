@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import LoginManager, login_user, logout_user, login_required
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import User
+from functools import wraps
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -37,3 +38,18 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+def permission_check(action):
+    def decor(function):
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+            user_id = kwargs.get('user_id')
+            user = None
+            if user_id:
+                user = load_user(user_id)
+            if not current_user.can(action, user):
+                flash('У вас недостаточно прав для выполнения данного действия.', 'warning')
+                return redirect(url_for('index'))
+            return function(*args, **kwargs)
+        return wrapper
+    return decor

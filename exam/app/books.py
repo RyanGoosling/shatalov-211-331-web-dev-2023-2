@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import current_user, login_required
-from app import db
-from models import Book, Genre, User, Review
-from tools import ImageSaver
+from auth import permission_check
+from app import db, app
+from models import Book, Genre, Review
+from tools import ImageSaver, Image
 import sqlalchemy as sa
+import os
 
 bp = Blueprint('books', __name__, url_prefix='/books')
 
@@ -30,7 +32,8 @@ def index():#http://httpbin.org/post
                            pagination=pagination)
 
 @bp.route('/new')
-def new():
+@permission_check('create')
+def new(): #user petrov fedorov stepanov maximov
     # d1 = {'last_name': 'Иванов', 'first_name': 'Иван', 'middle_name': 'Иванович', 
     #       'login': 'user', 'role_id': '1'}
     # d2 = {'last_name': 'Петров', 'first_name': 'Петр', 'middle_name': 'Петрович', 
@@ -58,16 +61,17 @@ def new():
                            genres=genres, book={})
 
 @bp.route('/create', methods=['POST'])
+@permission_check('create')
 def create():
     f = request.files.get('background_img')
     if f and f.filename:
         img = ImageSaver(f).save()
         
+    book = Book(**params(), background_image_id=img.id)
+    genres = request.form.getlist('genres')
+    genres = list(map(Genre.query.get, genres))
+    book.genres.extend(genres)
     try:
-        book = Book(**params(), background_image_id=img.id)
-        genres = request.form.getlist('genres')
-        for genre_id in genres:#Добавление сущностей Genre в book (MtM связь)
-            book.genres.append(Genre.query.get(genre_id))#других способов найти не смог
         db.session.add(book)
         db.session.commit()
         flash(f'Книга "{book.name}" была успешно добавлена!', 'success')
@@ -88,13 +92,13 @@ def show(book_id):
     user_review = Review()
     if current_user.is_authenticated:
         user_review = Review.query.filter_by(user_id=current_user.id).filter_by(book_id=book_id).first()
-    book_reviews = Review.query.filter_by(book_id=book_id).order_by(Review.created_at.desc()).limit(5).all()
+
     return render_template('books/show.html', book=book,
-                           review=user_review, book_reviews=book_reviews)
+                           review=user_review)
 
 @bp.route('/<int:book_id>/new review', methods=['POST'])
 @login_required
-def new_review(book_id): #user petrov fedorov stepanov maximov
+def new_review(book_id): 
     user_id = current_user.id
     check_review = Review.query.filter_by(book_id=book_id).filter_by(user_id=user_id).all()
     if check_review:
@@ -113,10 +117,10 @@ def new_review(book_id): #user petrov fedorov stepanov maximov
     except:
         db.session.rollback()
         flash(f'При сохранении отзыва произошла ошибка', 'success')
-    # print(user_id, course_id, text, rating, review)
-    return redirect(url_for('book.show', book_id=book_id))
+    return redirect(url_for('books.show', book_id=book_id))
 
 @bp.route('/<int:book_id>/edit')
+@permission_check('update')
 def edit(book_id):
     book = Book.query.get(book_id)
     genres = Genre.query.all()
@@ -126,22 +130,46 @@ def edit(book_id):
                            genres=genres, params=params)
 
 @bp.route('/<int:book_id>/update', methods=['POST'])
+@permission_check('update')
 def update(book_id):
     book = Book.query.get(book_id)
-    # try:
-    #     book = book(**params())
-    #     genres = request.form.getlist('genres')
-    #     for genre_id in genres:#Добавление сущностей Genre в book (MtM связь)
-    #         book.genres.append(Genre.query.get(genre_id))#других способов найти не смог
-    #     db.session.add(book)
-    #     db.session.commit()
-    #     flash(f'Книга "{book.name}" была успешно добавлена!', 'success')
+    new_params = params()
+    for key, value in new_params.items():
+        if value:
+            setattr(book, key, value)
+    genres = request.form.getlist('genres')
+    if genres:
+        genres = list(map(Genre.query.get, genres))
+        book.genres = genres
+    try:
+        db.session.commit()
+        flash(f'Книга "{book.name}" была успешно изменена!', 'success')
 
-    # except sa.exc.SQLAlchemyError as exc:
-    #     print(exc)
-    #     flash(f'При сохранении книги произошла ошибка', 'danger')
-    #     db.session.rollback()
-    #     genres = Genre.query.all()
-    #     return render_template('books/new.html',
-    #                        genres=genres)
+    except sa.exc.SQLAlchemyError as exc:
+        print(exc)
+        flash(f'При изменении книги "{book.name}" произошла ошибка', 'danger')
+        db.session.rollback()
+        genres = Genre.query.all()
+        return redirect(url_for('books.edit', book_id=book_id))
     return redirect(url_for('books.show', book_id=book_id))
+
+@bp.route('/<int:book_id>/delete', methods=['POST'])
+@permission_check('delete')
+def delete(book_id):
+    book = Book.query.get(book_id)
+    books_of_cover = Book.query.filter_by(background_image_id=book.bg_image.id).all()
+    len_of_books = len(books_of_cover)
+    try:
+        db.session.delete(book)
+        if len_of_books == 1:
+            cover = Image.query.get(book.bg_image.id)
+            db.session.delete(cover)
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'],
+                            cover.storage_filename))
+        db.session.commit()
+        flash(f'Книга "{book.name}" была успешно удалена!', 'success')
+    except sa.exc.SQLAlchemyError as exc:
+        print('='*30, "\n", exc, "\n", '='*30)
+        flash(f'При удалении книги "{book.name}" произошла ошибка', 'danger')
+        db.session.rollback()
+    return redirect(url_for('books.index'))

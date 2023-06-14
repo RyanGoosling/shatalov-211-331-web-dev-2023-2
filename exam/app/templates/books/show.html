@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-3">
+<div class="container mt-2">
+    <a class="btn btn-outline-dark mb-2 ms-4" href="{{url_for('books.index')}}">
+        <i class="bi bi-arrow-left"></i><span> Назад</span>
+    </a>
     <div class="row">
         <div class="col-md-3 text-center">
             <img src="{{ url_for('image', image_id=book.background_image_id) }}" alt="Cover of book" height="400">
@@ -58,7 +61,7 @@
         {% endif %}
 
         <div class="d-flex flex-column mt-3 ms-4">
-            {% for comment in book_reviews %}
+            {% for comment in book.reviews %}
             {% if comment.user_id != current_user.id %}
                 <div class="card my-2">
                     <div class="card-header">

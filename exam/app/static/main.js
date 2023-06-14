@@ -17,15 +17,30 @@ function imagePreviewHandler(event) {
 }
 
 function openLink(event) {
-    let col = event.target.closest('.col-md-4');
-    if (col.dataset.url) {
-        window.location = col.dataset.url;
+    if (event.target.tagName == 'I' || event.target.closest('.card') == null) 
+        return;
+    let card = event.target.closest('.card');
+    if (card.dataset.url) {
+        window.location = card.dataset.url;
     }
+}
+
+function deleteBookHandler(event) {
+    let form = document.querySelector('form');
+    form.action = event.relatedTarget.dataset.url;
+    let bookName = document.querySelector('#bookName');
+    // console.log(event.relatedTarget.closest('.card'))
+    bookName.innerHTML = event.relatedTarget.closest('.card').querySelector('#nameOfBook').textContent;
 }
 
 
 
 window.onload = function() {
+    let deleteUserModal = document.querySelector('#deleteBook');
+    if (deleteUserModal) {
+        deleteUserModal.addEventListener('show.bs.modal', deleteBookHandler);
+    }
+
     let background_img_field = document.getElementById('background_img');
     if (background_img_field) {
         background_img_field.onchange = imagePreviewHandler;
