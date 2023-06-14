@@ -16,15 +16,12 @@
                     <p class="my-1">Автор: {{book.author}}</p>
                     <p class="my-1">Издательство: {{book.publisher}}, {{book.year}} г.</p>
                     <p class="my-1">Страниц: {{book.pages}}</p>
-                    <p class="my-1">Жанры: 
-                        {% for genre in book.genres %}
-                            {{genre.name}}
-                        {% endfor %}
+                    <p class="my-1">Жанры: {{ book.genres_names }}
                     </p>
                 </div>
                 <div class="col-md-9">
                     <span>Рейтинг: ★</span> <span>{{ "%.2f" | format(book.rating) }}</span>
-                    <p class="my-1">{{book.short_desc}}</p>
+                    <p class="my-1">{{book.md_desc|safe}}</p>
                 </div>
             </div>
         </div>
@@ -42,10 +39,10 @@
             </div>
             {% if review %}
             <p class="ms-3 mt-2">Ваша оценка: {{review.rating_word}}</p>
-            <p class="ms-3 mb-3">{{review.text}}</p>
+            <div class="ms-3 mb-3">{{review.md_text|safe}}</div>
             {% else %}
             <form action="{{ url_for('books.new_review', book_id=book.id) }}" method="post">
-                <select class="form-select ms-3 my-3" id="review-rating" name="rating" title="Оценка курсу">
+                <select class="form-select my-3" id="review-rating" name="rating" title="Оценка курсу">
                     <option value="5" selected>Отлично</option>
                     <option value="4">Хорошо</option>
                     <option value="3">Удовлетворительно</option>

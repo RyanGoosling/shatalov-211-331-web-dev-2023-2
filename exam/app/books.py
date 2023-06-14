@@ -5,7 +5,7 @@ from app import db, app
 from models import Book, Genre, Review
 from tools import ImageSaver, Image
 import sqlalchemy as sa
-import os
+import os, bleach
 
 bp = Blueprint('books', __name__, url_prefix='/books')
 
@@ -24,7 +24,7 @@ def params():
 def index():#http://httpbin.org/post
     page = request.args.get('page', 1, type=int)
     # print('='*30, "\n", search_params(), "\n", '='*30)
-    books = Book.query
+    books = Book.query.order_by(Book.created_at.desc())
     pagination = books.paginate(page, PER_PAGE)
     books = pagination.items
     return render_template('books/index.html',
@@ -32,6 +32,7 @@ def index():#http://httpbin.org/post
                            pagination=pagination)
 
 @bp.route('/new')
+@login_required
 @permission_check('create')
 def new(): #user petrov fedorov stepanov maximov
     # d1 = {'last_name': 'Иванов', 'first_name': 'Иван', 'middle_name': 'Иванович', 
@@ -61,14 +62,27 @@ def new(): #user petrov fedorov stepanov maximov
                            genres=genres, book={})
 
 @bp.route('/create', methods=['POST'])
+@login_required
 @permission_check('create')
 def create():
     f = request.files.get('background_img')
     if f and f.filename:
         img = ImageSaver(f).save()
+    else:
+        flash(f'Выберите обложку для книги', 'warning')
+        genres = Genre.query.all()
+        return render_template('books/new.html',
+                           genres=genres, book=Book(**params()))
         
     book = Book(**params(), background_image_id=img.id)
+    book.short_desc = bleach.clean(book.short_desc)
     genres = request.form.getlist('genres')
+    if not genres:
+        flash(f'Выставите жанры для книги', 'warning')
+        genres = Genre.query.all()
+        return render_template('books/new.html',
+                           genres=genres, book=book)
+                           
     genres = list(map(Genre.query.get, genres))
     book.genres.extend(genres)
     try:
@@ -77,12 +91,20 @@ def create():
         flash(f'Книга "{book.name}" была успешно добавлена!', 'success')
 
     except sa.exc.SQLAlchemyError as exc:
-        print(exc)
+        print('='*30, '\n', exc)
         flash(f'При сохранении книги произошла ошибка', 'danger')
         db.session.rollback()
+        #После отката проверяем принадлежность обложки к книгам
+        #Если обложка не привязана к книге, то удаляем
+        book_of_cover = Book.query.filter_by(background_image_id=img.id).all()
+        if len(book_of_cover) == 0:
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'],
+                            img.storage_filename))
+            db.session.delete(img)
+        db.session.commit()
         genres = Genre.query.all()
         return render_template('books/new.html',
-                           genres=genres)
+                           genres=genres, book=book)
     return redirect(url_for('books.index'))
 
 
@@ -92,7 +114,6 @@ def show(book_id):
     user_review = Review()
     if current_user.is_authenticated:
         user_review = Review.query.filter_by(user_id=current_user.id).filter_by(book_id=book_id).first()
-
     return render_template('books/show.html', book=book,
                            review=user_review)
 
@@ -102,7 +123,7 @@ def new_review(book_id):
     user_id = current_user.id
     check_review = Review.query.filter_by(book_id=book_id).filter_by(user_id=user_id).all()
     if check_review:
-        flash(f'Вы уже оставляли отзыв на этот курс.', 'warning')
+        flash(f'Вы уже оставляли отзыв на эту книгу.', 'warning')
         return redirect(url_for('books.show', book_id=book_id))
     text = request.form['text']
     rating = request.form['rating']
@@ -120,6 +141,7 @@ def new_review(book_id):
     return redirect(url_for('books.show', book_id=book_id))
 
 @bp.route('/<int:book_id>/edit')
+@login_required
 @permission_check('update')
 def edit(book_id):
     book = Book.query.get(book_id)
@@ -130,12 +152,15 @@ def edit(book_id):
                            genres=genres, params=params)
 
 @bp.route('/<int:book_id>/update', methods=['POST'])
+@login_required
 @permission_check('update')
 def update(book_id):
     book = Book.query.get(book_id)
     new_params = params()
     for key, value in new_params.items():
         if value:
+            if key == 'short_desc':
+                value = bleach.clean(value)
             setattr(book, key, value)
     genres = request.form.getlist('genres')
     if genres:
@@ -154,6 +179,7 @@ def update(book_id):
     return redirect(url_for('books.show', book_id=book_id))
 
 @bp.route('/<int:book_id>/delete', methods=['POST'])
+@login_required
 @permission_check('delete')
 def delete(book_id):
     book = Book.query.get(book_id)
@@ -161,7 +187,7 @@ def delete(book_id):
     len_of_books = len(books_of_cover)
     try:
         db.session.delete(book)
-        if len_of_books == 1:
+        if len_of_books == 1: #Если на обложку ссылается несколько книг, то удалять не надо
             cover = Image.query.get(book.bg_image.id)
             db.session.delete(cover)
             os.remove(os.path.join(app.config['UPLOAD_FOLDER'],

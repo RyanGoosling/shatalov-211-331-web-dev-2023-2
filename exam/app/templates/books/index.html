@@ -18,12 +18,13 @@
                                 format(book.rating) }}</span>
                         </p>
                         <p class="card-text">
-                            Автор: {{ book.author }}
+                            Автор: {{ book.author }} <br>
+                            Жанры: {{ book.genres_names }}
                         </p>
                     </div>
                     <div class="card-footer text-muted">
                         <p class="mb-2">
-                            Издательсво: {{book.publisher}}, {{book.year}} г.
+                            Издательсво: {{book.publisher}}, {{book.year}} г. Кол-во отзывов: {{ book.rating_num }}
                         </p>
                         {% if current_user.is_authenticated and current_user.can('update') %}
                         <div class="fs-4 mt-2 d-flex justify-content-evenly manage-button">

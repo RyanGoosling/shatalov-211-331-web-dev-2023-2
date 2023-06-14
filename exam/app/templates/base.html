@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-
+    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
     <title>Электронная библиотека | Московский Политех</title>
@@ -60,13 +60,15 @@
        {% endblock %}
     </main>
 
-    <footer class="bg-dark text-white d-flex align-items-center justify-content-center py-3">
-        &copy; Московский политехнический университет
+    <footer class="bg-dark text-white d-flex flex-column align-items-center justify-content-center py-3">
+        <p class="m-0">Шаталов Вадим Павлович 211-331</p>
+        <p class="m-0 text-secondary">Made by Ryan Goosling</p>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2"
         crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
 
     <script defer src="{{ url_for('static', filename='main.js') }}"></script>
 </body>

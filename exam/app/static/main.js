@@ -41,6 +41,16 @@ window.onload = function() {
         deleteUserModal.addEventListener('show.bs.modal', deleteBookHandler);
     }
 
+    let book_desc = document.getElementById('short_desc');
+    if (book_desc) {
+        const easymde = new EasyMDE({book_desc},);
+    }
+
+    let review_text = document.getElementById('review-text');
+    if (review_text) {
+        const easymde = new EasyMDE({review_text},);
+    }
+
     let background_img_field = document.getElementById('background_img');
     if (background_img_field) {
         background_img_field.onchange = imagePreviewHandler;

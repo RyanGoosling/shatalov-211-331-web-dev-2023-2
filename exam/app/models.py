@@ -1,4 +1,4 @@
-import os
+import os, markdown
 import sqlalchemy as sa
 from sqlalchemy.dialects.mysql import YEAR
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -64,6 +64,17 @@ class Book(db.Model):
         self.rating_num += 1
         self.rating_sum += n
 
+    @property
+    def genres_names(self):
+        names_list = []
+        for genre in self.genres:
+            names_list.append(genre.name) 
+        return ', '.join(names_list)
+    
+    @property
+    def md_desc(self):
+        return markdown.markdown(self.short_desc)
+
 class Image(db.Model):
     __tablename__ = 'images'
 
@@ -104,6 +115,10 @@ class Review(db.Model):
     @property
     def rating_word(self):
         return RATING_WORDS.get(self.rating)
+    
+    @property
+    def md_text(self):
+        return markdown.markdown(self.text)
 
     def __repr__(self):
         return '<Review %r, %r>' % (self.id, self.text[:10])
