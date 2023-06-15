@@ -1,0 +1,54 @@
+{% extends 'history/base.html' %}
+{% from 'pagination.html' import render_pagination %}
+
+{% block tab_content %}
+<div class="container my-3">
+    <form action="{{url_for('history.books_stat')}}" method="get" class="d-flex gap-4">
+        <div class="input-group w-25">
+            <span class="input-group-text">От 00:00</span>
+            <input class="form-control" type="date" name="date_from" 
+            id="date-from" value="{{request.args.get('date_from')}}" max="{{today}}">
+        </div>
+        <div class="input-group w-25">
+            <span class="input-group-text">До 23:59</span>
+            <input class="form-control" type="date" name="date_to" 
+            id="date-to" value="{{request.args.get('date_to')}}" max="{{today}}">
+        </div>
+        <button class="btn btn-outline-dark" type="submit">Найти</button>
+    </form>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                №
+            </th>
+            <th>
+                Книга
+            </th>
+            <th>
+                Количество просмотров
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+        <tr>
+            <td>
+                {{loop.index + ((pagination.page-1) * pagination.per_page)}}
+            </td>
+            <td>
+                {{record[0].book.author}}: {{record[0].book.name}} 
+            </td>
+            <td>
+                {{record[1]}}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div class="mb-5">
+    {{ render_pagination(pagination, request.endpoint, search_params) }}
+</div>
+<a class="btn btn-primary ms-4 mb-4" href="{{ url_for('history.books_stat', download_csv=True) }}">Экспорт в CSV</a>
+{% endblock %}

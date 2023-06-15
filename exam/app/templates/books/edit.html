@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% from 'books/form.html' import book_form %}
+
+{% block content %}
+    <div class="container">
+        <h2 class="mt-3 text-center text-uppercase font-weight-bold">Редактирование книги {{book.name}}</h2>
+        <p class="text-center mt-1 fs-5"><strong>Внимание!</strong> Незаполненые поля будут проигнорированы!</p>
+        {{ book_form(book, genres, 'books.update', params) }}
+    </div>
+{% endblock %}
