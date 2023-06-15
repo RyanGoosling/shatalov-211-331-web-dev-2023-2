@@ -22,9 +22,11 @@ migrate = Migrate(app, db)
 
 from auth import bp as auth_bp, init_login_manager
 from books import bp as books_bp
+from history import bp as history_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(books_bp)
+app.register_blueprint(history_bp)
 
 init_login_manager(app)
 

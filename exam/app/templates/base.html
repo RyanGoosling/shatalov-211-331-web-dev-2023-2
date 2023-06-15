@@ -23,7 +23,16 @@
                         <img class="img-fluid" src="{{ url_for('static', filename='images/polytech_logo.png') }}" alt="polytech-logo">
                     </a>
                 </div>
+                <div class="d-flex gap-3">
+                    <div class="align-self-center">
+                        <a class="btn btn-outline-light" href="{{url_for('books.popular')}}">Популярные книги</a>
+                    </div>
                 {% if current_user.is_authenticated %}
+                    {% if current_user.can('show_log') %}
+                    <div class="align-self-center">
+                        <a class="btn btn-outline-light" href="{{url_for('history.activity')}}">Статистика</a>
+                    </div>
+                    {% endif %}
                     <div class="dropdown d-flex" style="width: 200px;">
                         <div class="profile ms-auto" title="{{ current_user.full_name }}" id="dropdownMenuButton" data-bs-toggle="dropdown"
                             aria-haspopup="true" aria-expanded="false">
@@ -39,6 +48,7 @@
                     </div>
                 {% else %}
                     <a class="btn btn-outline-light" href="{{ url_for('auth.login') }}">Войти</a>
+                </div>
                 {% endif %}
             </div>
         </nav>

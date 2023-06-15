@@ -50,6 +50,7 @@ class Book(db.Model):
     genres = db.relationship('Genre', secondary=book_genre, backref='books')#backref: genres.books = books.genres
     bg_image = db.relationship('Image', backref='books')
     reviews = db.relationship('Review', cascade='all, delete', backref='book')
+    histories = db.relationship('History', cascade='all, delete')
 
     def __repr__(self):
         return '<Book %r>' % self.name
@@ -143,7 +144,8 @@ class User(db.Model, UserMixin):
     login = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
-    created_at = db.Column(db.DateTime, nullable=False, server_default=sa.sql.func.now())
+    created_at = db.Column(db.DateTime, nullable=False, 
+                           server_default=sa.sql.func.now())
 
     role = db.relationship('Role')
 
@@ -174,6 +176,22 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return '<User %r>' % self.login
+    
+class History(db.Model):
+    __tablename__ = 'histories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    book_id = db.Column(db.Integer, db.ForeignKey('books.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id')) 
+    created_at = db.Column(db.DateTime,
+                           nullable=False,
+                           server_default=sa.sql.func.now())
+
+    book = db.relationship('Book', viewonly=True)
+    user = db.relationship('User', backref='history')
+
+    def __repr__(self):
+        return '<History at %r from %s>' % (self.book_id, self.created_at)
     
 # flask db init
 # flask db migrate -m "comment"

@@ -69,9 +69,11 @@
         </div>
     </div>
 
+    {% if 'index' in request.endpoint %}
     <div class="mb-5">
         {{ render_pagination(pagination, request.endpoint, search_params) }}
     </div>
+    {% endif %}
 
     {% if current_user.is_authenticated and current_user.can('create') %}
     <div class="text-center my-3">
