@@ -27,6 +27,12 @@
     border-radius: 5px;
 }
 
+.recent-book:hover {
+    cursor: pointer;
+    border: 1px solid #acaaaa !important;
+    border-radius: 5px;
+}
+
 .manage-button a:hover{
     cursor: pointer;
     transition: 0.3s; 

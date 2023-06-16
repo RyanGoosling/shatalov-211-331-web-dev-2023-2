@@ -58,4 +58,7 @@ window.onload = function() {
     for (let course_elm of document.querySelectorAll('.courses-list .col-md-4')) {
         course_elm.onclick = openLink;
     }
+    for (let course_elm of document.querySelectorAll('.recent-book')) {
+        course_elm.onclick = openLink;
+    }
 }
