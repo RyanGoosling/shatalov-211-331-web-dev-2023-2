@@ -75,6 +75,60 @@
     </div>
     {% endif %}
 
+    {% if recent_books %}
+    <div class="recent-books">
+        <h3>Недавно просмотренные книги:</h3>
+        <div class="d-flex mb-3 mt-3 gap-2 justify-content-evenly">
+            {% for book in recent_books %}
+            <div class="d-flex recent-book justify-content-center" >
+                <div class="card my-2" data-url="{{ url_for('books.show', book_id=book.id) }}">
+                    <img class="card-img-top w-50 align-self-center mt-3" height="230"
+                        src="{{ url_for('image', image_id=book.background_image_id) }}" alt="Card image cap">
+                    <div class="card-body">
+                        <p class="card-title fw-bold">
+                            <span id="nameOfRecentBook">{{ book.name }}</span> 
+                            <span>★</span> <span>{{ "%.2f" |
+                                format(book.rating) }}</span>
+                        </p>
+                        <p class="card-text">
+                            Автор: {{ book.author }} <br>
+                            Жанры: {{ book.genres_names }}
+                        </p>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <p class="mb-2">
+                            Издательсво: {{book.publisher}}, {{book.year}} г. Кол-во отзывов: {{ book.rating_num }}
+                        </p>
+                    </div>
+                </div>
+                <!-- <div class="modal fade" id="deleteBook" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+                    aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="staticBackdropLabel">Удаление книги</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Вы уверены, что хотите удалить книгу "<span id="bookName"></span>"?</p>
+                                <form class="d-none" action="" method="POST">
+                                    <input type="submit" id="deleteBookButton">
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                <label for="deleteBookButton" class="btn btn-danger">Удалить</label>
+                            </div>
+                        </div>
+                    </div>
+                </div> -->
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     {% if current_user.is_authenticated and current_user.can('create') %}
     <div class="text-center my-3">
         <a class="btn btn-lg btn-dark" href="{{ url_for('books.new') }}">Добавить книгу</a>

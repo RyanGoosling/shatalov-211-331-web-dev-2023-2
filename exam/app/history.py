@@ -10,16 +10,6 @@ bp = Blueprint('history', __name__, url_prefix='/history')
 
 PER_PAGE = 10
 
-def generate_report_file(records, fields):
-    csv_content = '№,' + ','.join(fields) + '\n'
-    for i, record in enumerate(records):
-        values = [str(getattr(record, f, '')) for f in fields]
-        csv_content += f'{i+1},' + ','.join(values) + '\n'
-    f = io.BytesIO()
-    f.write(csv_content.encode('utf-8'))
-    f.seek(0)
-    return f
-
 @bp.route('/users activity')
 @login_required
 @permission_check('show_log')

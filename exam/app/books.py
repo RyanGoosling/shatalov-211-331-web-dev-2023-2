@@ -46,9 +46,26 @@ def index():#http://httpbin.org/post
     books = Book.query.order_by(Book.created_at.desc())
     pagination = books.paginate(page, PER_PAGE)
     books = pagination.items
+    user_id = getattr(current_user, 'id', None)
+    # составить один, два запроса для полученния недавно просмотренных не удалось
+    # получилось вывести такой вариант
+    recent_history = History.query.filter_by(user_id=user_id).order_by(History.created_at.desc()).all()
+    print('='*30, '\n', recent_history)
+
+    unique_book_ids = set()
+    unique_book_ids_list = []
+    for history in recent_history:
+        if history.book_id not in unique_book_ids:
+            unique_book_ids_list.append(history.book_id)
+            unique_book_ids.add(history.book_id)
+            if len(unique_book_ids_list) == 5:
+                break
+    print('='*30, '\n', unique_book_ids_list)
+    recent_books = list(map(Book.query.get, unique_book_ids_list))
+    print('='*30, '\n', recent_books)
     return render_template('books/index.html',
                            books=books, search_params={},
-                           pagination=pagination)
+                           pagination=pagination, recent_books=recent_books)
 
 @bp.route('/popular')
 def popular():
