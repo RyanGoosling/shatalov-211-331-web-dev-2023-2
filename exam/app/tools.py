@@ -40,3 +40,18 @@ class ImageSaver:
         self.md5_hash = hashlib.md5(self.file.read()).hexdigest()
         self.file.seek(0)
         return Image.query.filter(Image.md5_hash == self.md5_hash).first()
+    
+class ImageDeleter:
+    def __init__(self, img):
+        self.img = img #img - Image
+
+    def delete(self, n: int):
+        """Удалит обложку из хранилища и бд, если её используют n книг"""
+        try:
+            if len(self.img.books) == n:
+                os.remove(os.path.join(app.config['UPLOAD_FOLDER'],
+                                self.img.storage_filename))
+                db.session.delete(self.img)
+            db.session.commit()
+        except sa.exc.SQLAlchemyError:
+            db.session.rollback()

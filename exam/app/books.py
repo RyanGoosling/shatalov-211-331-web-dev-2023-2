@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, make_response
 from flask_login import current_user, login_required
 from auth import permission_check
 from app import db, app
 from models import Book, Genre, Review, History
-from tools import ImageSaver, Image
+from tools import ImageSaver, ImageDeleter
 import sqlalchemy as sa
 import os, bleach, datetime
 
@@ -46,26 +46,15 @@ def index():#http://httpbin.org/post
     books = Book.query.order_by(Book.created_at.desc())
     pagination = books.paginate(page, PER_PAGE)
     books = pagination.items
-    user_id = getattr(current_user, 'id', None)
-    # составить один, два запроса для полученния недавно просмотренных не удалось
-    # получилось вывести такой вариант
-    recent_history = History.query.filter_by(user_id=user_id).order_by(History.created_at.desc()).all()
-    print('='*30, '\n', recent_history)
-
-    unique_book_ids = set()
-    unique_book_ids_list = []
-    for history in recent_history:
-        if history.book_id not in unique_book_ids:
-            unique_book_ids_list.append(history.book_id)
-            unique_book_ids.add(history.book_id)
-            if len(unique_book_ids_list) == 5:
-                break
-    print('='*30, '\n', unique_book_ids_list)
-    recent_books = list(map(Book.query.get, unique_book_ids_list))
-    print('='*30, '\n', recent_books)
+    recently_books = request.cookies.get('recently_books')
+    if recently_books:
+        recently_books = recently_books.split(',')
+        print('='*30, '\n', recently_books)
+        recently_books = list(map(Book.query.get, recently_books))
+    print('='*30, '\n', recently_books)
     return render_template('books/index.html',
                            books=books, search_params={},
-                           pagination=pagination, recent_books=recent_books)
+                           pagination=pagination, recent_books=recently_books)
 
 @bp.route('/popular')
 def popular():
@@ -94,26 +83,33 @@ def new(): #user/pavlov petrov/alexeev fedorov stepanov maximov tarasov danilov
 @login_required
 @permission_check('create')
 def create():
+    genres_list = Genre.query.all()
     f = request.files.get('background_img')
     if f and f.filename:
         img = ImageSaver(f).save()
+        imgDel = ImageDeleter(img)
     else:
         flash(f'Выберите обложку для книги', 'warning')
-        genres = Genre.query.all()
         return render_template('books/new.html',
-                           genres=genres, book=Book(**params()))
+                           genres=genres_list, book=Book(**params()))
         
     book = Book(**params(), background_image_id=img.id)
     book.short_desc = bleach.clean(book.short_desc)
     genres = request.form.getlist('genres')
     if not genres:
+        imgDel.delete(0)
         flash(f'Выставите жанры для книги', 'warning')
-        genres = Genre.query.all()
         return render_template('books/new.html',
-                           genres=genres, book=book)
+                           genres=genres_list, book=book)
                            
     genres = list(map(Genre.query.get, genres))
     book.genres.extend(genres)
+    for key in BOOK_PARAMS:
+        if not getattr(book, key):
+            imgDel.delete(0)
+            flash(f'Заполните все поля книги', 'warning')
+            return render_template('books/new.html',
+                                   genres=genres_list, book=book)
     try:
         db.session.add(book)
         db.session.commit()
@@ -125,15 +121,10 @@ def create():
         db.session.rollback()
         #После отката проверяем принадлежность обложки к книгам
         #Если обложка не привязана к книге, то удаляем
-        book_of_cover = Book.query.filter_by(background_image_id=img.id).all()
-        if len(book_of_cover) == 0:
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'],
-                            img.storage_filename))
-            db.session.delete(img)
-        db.session.commit()
+        imgDel.delete(0)
         genres = Genre.query.all()
         return render_template('books/new.html',
-                           genres=genres, book=book)
+                           genres=genres_list, book=book)
     return redirect(url_for('books.index'))
 
 
@@ -145,8 +136,25 @@ def show(book_id):
     user_review = Review()
     if current_user.is_authenticated:
         user_review = Review.query.filter_by(user_id=current_user.id).filter_by(book_id=book_id).first()
-    return render_template('books/show.html', book=book,
-                           review=user_review)
+    # Просмотр книги (book_id) записывается в куки
+    recently_books = request.cookies.get('recently_books')
+    if recently_books:
+        recently_books = recently_books.split(',')
+    else:
+        recently_books = []
+    print('='*30, '\n', recently_books)
+    if str(book_id) in recently_books:
+        recently_books.remove(str(book_id))
+        recently_books.insert(0, str(book_id))
+    else:
+        recently_books.insert(0, str(book_id))
+    recently_books = recently_books[:5]
+    print('='*30, '\n', recently_books)
+    recently_books_str = ','.join(recently_books)
+
+    response = make_response(render_template('books/show.html', book=book, review=user_review))
+    response.set_cookie('recently_books', recently_books_str)
+    return response
 
 @bp.route('/<int:book_id>/new review', methods=['POST'])
 @login_required
@@ -214,15 +222,10 @@ def update(book_id):
 @permission_check('delete')
 def delete(book_id):
     book = Book.query.get(book_id)
-    books_of_cover = Book.query.filter_by(background_image_id=book.bg_image.id).all()
-    len_of_books = len(books_of_cover)
     try:
         db.session.delete(book)
-        if len_of_books == 1: #Если на обложку ссылается несколько книг, то удалять не надо
-            cover = Image.query.get(book.bg_image.id)
-            db.session.delete(cover)
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'],
-                            cover.storage_filename))
+        imgDel = ImageDeleter(book.bg_image)
+        imgDel.delete(1)
         db.session.commit()
         flash(f'Книга "{book.name}" была успешно удалена!', 'success')
     except sa.exc.SQLAlchemyError as exc:

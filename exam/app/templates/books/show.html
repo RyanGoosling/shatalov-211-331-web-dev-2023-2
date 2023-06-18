@@ -18,6 +18,46 @@
                     <p class="my-1">Страниц: {{book.pages}}</p>
                     <p class="my-1">Жанры: {{ book.genres_names }}
                     </p>
+                    {% if current_user.is_authenticated and current_user.can('update') %}
+                    <div class="fs-4 mt-3 d-flex manage-button">
+                        <a class="text-secondary text-decoration-none"
+                            href="{{ url_for('books.edit', book_id=book.id) }}">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                        {% if current_user.is_authenticated and current_user.can('delete') %}
+                        <a class=" ms-auto me-5 text-danger text-decoration-none" href="#" data-bs-toggle="modal"
+                            data-url="{{ url_for('books.delete', book_id=book.id) }}"
+                            data-bs-target="#deleteBookInShow">
+                            <i class="bi bi-trash3"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="modal fade" id="deleteBookInShow" data-bs-backdrop="static" data-bs-keyboard="false"
+                        tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="staticBackdropLabel">Удаление книги</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Вы уверены, что хотите удалить книгу "<span id="bookName">{{book.name}}</span>"?
+                                    </p>
+                                    <form class="d-none" action="{{ url_for('books.delete', book_id=book.id) }}"
+                                        method="POST">
+                                        <input type="submit" id="deleteBookButton">
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Отмена</button>
+                                    <label for="deleteBookButton" class="btn btn-danger">Удалить</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="col-md-9">
                     <span>Рейтинг: ★</span> <span>{{ "%.2f" | format(book.rating) }}</span>
@@ -60,14 +100,14 @@
         <div class="d-flex flex-column mt-3 ms-4">
             {% for comment in book.reviews %}
             {% if comment.user_id != current_user.id %}
-                <div class="card my-2">
-                    <div class="card-header">
-                        <h5>{{comment.user.full_name}}</h5>
-                        <span>{{comment.created_at}}</span>
-                    </div>
-                    <p class="ms-3 mt-2">Оценка: {{comment.rating_word}}</p>
-                    <p class="ms-3 mb-3">{{comment.text}}</p>
+            <div class="card my-2">
+                <div class="card-header">
+                    <h5>{{comment.user.full_name}}</h5>
+                    <span>{{comment.created_at}}</span>
                 </div>
+                <p class="ms-3 mt-2">Оценка: {{comment.rating_word}}</p>
+                <p class="ms-3 mb-3">{{comment.text}}</p>
+            </div>
             {% endif %}
             {% endfor %}
         </div>

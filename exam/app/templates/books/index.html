@@ -82,7 +82,7 @@
             {% for book in recent_books %}
             <div class="d-flex recent-book justify-content-center" >
                 <div class="card my-2" data-url="{{ url_for('books.show', book_id=book.id) }}">
-                    <img class="card-img-top w-50 align-self-center mt-3" height="230"
+                    <img class="card-img-top w-50 align-self-center mt-3"
                         src="{{ url_for('image', image_id=book.background_image_id) }}" alt="Card image cap">
                     <div class="card-body">
                         <p class="card-title fw-bold">
@@ -97,7 +97,10 @@
                     </div>
                     <div class="card-footer text-muted">
                         <p class="mb-2">
-                            Издательсво: {{book.publisher}}, {{book.year}} г. Кол-во отзывов: {{ book.rating_num }}
+                            Издательсво: {{book.publisher}}, {{book.year}} г. 
+                        </p>
+                        <p class="mb-2">
+                            Кол-во отзывов: {{ book.rating_num }}
                         </p>
                     </div>
                 </div>

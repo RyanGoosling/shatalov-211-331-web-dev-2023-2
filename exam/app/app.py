@@ -1,4 +1,4 @@
-from flask import Flask, render_template, abort, send_from_directory, redirect, url_for
+from flask import Flask, abort, send_from_directory, redirect, url_for
 from sqlalchemy import MetaData
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate #Для изменение схемы бд без потери данных Обёртка на Alembic
@@ -30,15 +30,10 @@ app.register_blueprint(history_bp)
 
 init_login_manager(app)
 
-from models import Book, Image
+from models import Image
 
 @app.route('/')
 def index():
-    # books = Book.query.all()
-    # return render_template(
-    #     'books/index.html',
-    #     books=books,
-    # )
     return redirect(url_for('books.index'))
 
 @app.route('/images/<image_id>')
