@@ -223,9 +223,9 @@ def update(book_id):
 def delete(book_id):
     book = Book.query.get(book_id)
     try:
-        db.session.delete(book)
         imgDel = ImageDeleter(book.bg_image)
-        imgDel.delete(1)
+        db.session.delete(book)
+        imgDel.delete(0)
         db.session.commit()
         flash(f'Книга "{book.name}" была успешно удалена!', 'success')
     except sa.exc.SQLAlchemyError as exc:
